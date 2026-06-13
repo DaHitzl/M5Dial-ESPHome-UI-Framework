@@ -24,6 +24,7 @@ Keep your ESPHome directory completely clean:
        ├── ui_helpers.h         <-- Dumb drawing functions
        └── sound_manager.h      <-- Centralized RTTTL manager
 
+
 ## 🚀 Installation
 Copy the m5dial folder and the m5-stack-dial.yaml into your ESPHome configuration directory.
 
