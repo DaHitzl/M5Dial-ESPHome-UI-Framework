@@ -24,7 +24,7 @@ Keep your ESPHome directory completely clean:
        ├── ui_helpers.h         <-- Dumb drawing functions
        └── sound_manager.h      <-- Centralized RTTTL manager
 
-🚀 Installation
+## 🚀 Installation
 Copy the m5dial folder and the m5-stack-dial.yaml into your ESPHome configuration directory.
 
 Open m5-stack-dial.yaml and adjust:
@@ -35,7 +35,7 @@ Your specific Home Assistant sensors (e.g., Shelly temperature entities).
 
 Click "Install" in your ESPHome dashboard.
 
-🛠️ How to add a new Page
+## 🛠️ How to add a new Page
 Adding a new page is incredibly simple due to the decoupled architecture:
 
 Create a new file page_custom.h that inherits from PageInterface.
