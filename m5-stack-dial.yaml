@@ -9,6 +9,7 @@ esphome:
     - m5dial/page_ha.h
     - m5dial/page_settings.h
     - m5dial/page_music.h
+    - m5dial/page_lock.h
     - m5dial/m5dial_ui.h
 
   on_boot:
@@ -59,18 +60,18 @@ logger:
 api:
   id: api_server
   encryption:
-    key: "Your Api Key"
+    key: "your key"
 
 ota:
   - platform: esphome
-    password: "Your esphome Password"
+    password: "your password"
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
     ssid: "M5-Stack-Dial Fallback Hotspot"
-    password: "*"
+    password: "your password"
 
 time:
   - platform: homeassistant
@@ -137,8 +138,8 @@ script:
           service: input_boolean.turn_off
           data: { entity_id: input_boolean.m5_dial_filter_mode }
 
-  # Dieses Hilfs-Script verzögert den UI-Reset minimal,
-  # damit HA Zeit hat, die Daten zu aktualisieren.
+  # Display delay for HA answer,
+
   - id: script_ha_select_room
     mode: single
     then:
@@ -151,20 +152,86 @@ script:
       - lambda: 'dial_ui->get_ha_page()->reset_to_devices();'
       - component.update: meine_display_id
 
-  - id: script_ha_execute_action
-    mode: single
+  - id: script_ha_advanced_action
+    parameters:
+      p_entity: string
+      p_action: string
+      p_value: int
     then:
-      - homeassistant.service:
-          service: !lambda |-
-            int action = dial_ui->get_ha_page()->get_action_type();
-            if (action == 0) return "homeassistant.toggle";
-            if (action == 1) return "homeassistant.turn_on";
-            return "homeassistant.turn_off";
-          data:
-            entity_id: !lambda 'return dial_ui->get_ha_page()->get_selected_entity();'
-      - delay: 100ms
+      # 1. (Toggle, On, Off)
+      - if:
+          condition:
+            lambda: 'return p_action == "TOGGLE";'
+          then:
+            - homeassistant.service:
+                service: homeassistant.toggle
+                data:
+                  entity_id: !lambda 'return p_entity;'
+      - if:
+          condition:
+            lambda: 'return p_action == "TURN_ON";'
+          then:
+            - homeassistant.service:
+                service: homeassistant.turn_on
+                data:
+                  entity_id: !lambda 'return p_entity;'
+      - if:
+          condition:
+            lambda: 'return p_action == "TURN_OFF";'
+          then:
+            - homeassistant.service:
+                service: homeassistant.turn_off
+                data:
+                  entity_id: !lambda 'return p_entity;'
+                  
+      # 2. Brightness (Light)
+      - if:
+          condition:
+            lambda: 'return p_action == "BRIGHTNESS";'
+          then:
+            - homeassistant.service:
+                service: light.turn_on
+                data:
+                  entity_id: !lambda 'return p_entity;'
+                  brightness_pct: !lambda 'return p_value;'
+                  
+      # 3. Colour
+      - if:
+          condition:
+            lambda: 'return p_action == "COLOR";'
+          then:
+            - homeassistant.service:
+                service: light.turn_on
+                data_template:
+                  entity_id: !lambda 'return p_entity;'
+                  hs_color: !lambda 'char buffer[32]; sprintf(buffer, "[%d, 100]", p_value); return std::string(buffer);'
+                  
+      # 4. Thermostat  (Climate)
+      - if:
+          condition:
+            lambda: 'return p_action == "TEMP";'
+          then:
+            - homeassistant.service:
+                service: climate.set_temperature
+                data:
+                  entity_id: !lambda 'return p_entity;'
+                  temperature: !lambda 'return p_value;'
+                  
+      # 5. Speedcontroller (Fan)
+      - if:
+          condition:
+            lambda: 'return p_action == "SPEED";'
+          then:
+            - homeassistant.service:
+                service: fan.set_percentage
+                data:
+                  entity_id: !lambda 'return p_entity;'
+                  percentage: !lambda 'return p_value;'
+
+      # Display reset 
+      - delay: 150ms
       - lambda: 'dial_ui->get_ha_page()->reset_to_devices();'
-      - component.update: meine_display_id
+      - component.update: meine_display_id    
 
   - id: update_display_delayed
     mode: restart
@@ -172,7 +239,7 @@ script:
       - wait_until:
           condition:
             lambda: 'return !id(my_buzzer).is_playing();'
-      - component.update: meine_display_id        
+      - component.update: meine_display_id
 
 touchscreen:
   - platform: ft63x6
@@ -233,14 +300,14 @@ sensor:
 
   - platform: homeassistant
     id: temp_sensor
-    entity_id: "put your sensor here or delete
+    entity_id: your sensor
     internal: true
     on_value:
       then: [component.update: meine_display_id]
 
   - platform: homeassistant
     id: humidity_sensor
-    entity_id: put your sensor here or delete
+    entity_id: your sensor
     internal: true
     on_value:
       then: [component.update: meine_display_id]
@@ -312,3 +379,27 @@ binary_sensor:
       then:
         - lambda: 'dial_ui->on_button();'
         - script.execute: update_display_delayed
+
+globals:
+  - id: global_admin_pin
+    type: int
+    initial_value: !secret start_admin_pin
+    restore_value: true
+  - id: global_display_pin
+    type: int
+    initial_value: '0'
+    restore_value: true
+  - id: global_display_pin_active
+    type: bool
+    initial_value: 'false'
+    restore_value: true
+  - id: global_display_timeout
+    type: int
+    initial_value: '60'
+    restore_value: true
+  - id: global_fallback_trigger
+    type: int
+    initial_value: !secret fallback_trigger
+  - id: global_fallback_unlock
+    type: int
+    initial_value: !secret fallback_unlock
