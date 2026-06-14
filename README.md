@@ -1,14 +1,23 @@
-# 🎛️ M5Stack Dial - Modular ESPHome UI Framework
+## 🌟 Key Features
+Zero YAML Spaghetti: The UI is completely modularized into C++ classes (State Pattern). Adding a new page or logic is extremely simple and keeps the YAML under 200 lines.
 
-A blazing fast, object-oriented, and event-driven C++ UI framework for the M5Stack Dial in ESPHome. 
+Dynamic Home Assistant Control: The device automatically detects your HA entities.
 
-Tired of scrolling through thousands of lines of YAML to change a simple menu? This project completely separates the **Hardware Configuration (YAML)** from the **UI Logic (C++)**.
+Lights: Shows Brightness (%) and Color (Hue) sliders.
 
-## ✨ Features
-* **Zero YAML UI Logic:** The `.yaml` file only defines hardware pins and Home Assistant services. All UI drawing and navigation is handled by a highly optimized C++ class.
-* **Blazing Fast Response:** Intelligent asynchronous updates and `wait_until` triggers ensure instant display feedback, even while RTTTL sounds are playing.
-* **Modular Page System (State Pattern):** Each page (Home Assistant, Settings, Music) is a completely isolated `.h` file. They communicate with the main controller via clean `std::function` callbacks.
-* **Plug & Play:** Easily add new pages (like a Media Player or RGB Color Picker) without touching the main logic.
+Climate: Turns the dial into a thermostat (°C).
+
+Fans: Adjusts speed percentages.
+
+"Two-Factor" Security System: * Global Lockscreen: The display wakes up to show time/weather, but requires a 4-digit PIN to access any controls.
+
+Admin Menu: Hidden menu to change the display PIN, set the display timeout (30-180s), or toggle a debug mode.
+
+Emergency Fallback: An 8-digit hardcoded fallback sequence in case you forget your PINs.
+
+Power-Loss Safe: All custom settings (PINs, Timeout) are saved directly to the ESP32's flash memory (NVS) and survive reboots instantly.
+
+Tactile & Audio Feedback: Every rotation step and button press is synced with the internal buzzer for a premium, mechanical feel.
 
 ## 📂 Folder Structure
 Keep your ESPHome directory completely clean:
@@ -24,23 +33,19 @@ Keep your ESPHome directory completely clean:
        ├── ui_helpers.h         <-- Dumb drawing functions
        └── sound_manager.h      <-- Centralized RTTTL manager
 ````
+## 🚀 Getting Started
+I've made the setup as easy as possible. You don't need to touch the C++ code to get started.
 
-## 🚀 Installation
-Copy the m5dial folder and the m5-stack-dial.yaml into your ESPHome configuration directory.
+Clone the repository: [Link to your GitHub repo]
 
-Open m5-stack-dial.yaml and adjust:
+Copy the m5dial folder into your ESPHome configuration directory.
 
-Your Wi-Fi credentials (!secret)
+Add your passwords and default PINs to your secrets.yaml.
 
-Your specific Home Assistant sensors (e.g., Shelly temperature entities).
+Flash the m5-stack-dial.yaml to your device!
 
-Click "Install" in your ESPHome dashboard.
+All the UI graphics (Neon Style) are included in the repo.
 
-## 🛠️ How to add a new Page
-Adding a new page is incredibly simple due to the decoupled architecture:
+I’d love to hear your feedback! The next step on the roadmap (V0.9.0) is building out a full Media Player page. If anyone wants to contribute or fork it, feel free!
 
-Create a new file page_custom.h that inherits from PageInterface.
-
-Implement your draw(), on_encoder(), and on_touch() logic.
-
-Include it in m5dial_ui.h, add it to the state machine, and map your callbacks. Done!
+Cheers!
